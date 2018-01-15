@@ -6,7 +6,8 @@ let articleView = {};
 
 // COMMENT: How do arrow functions affect the context of "this"? How did you determine if a function could be refactored?
 // Arrow functions change the scoping of "this". This is important to consider when you have functions nested within functions.
-articleView.populateFilters = function(){
+
+articleView.populateFilters = () => {
   $('article').each(function() {
     if (!$(this).hasClass('template')) {
       let val = $(this).find('address a').text();
@@ -15,7 +16,7 @@ articleView.populateFilters = function(){
       if ($(`#author-filter option[value="${val}"]`).length === 0) {
         $('#author-filter').append(optionTag);
       }
-
+      console.log(typeof $(`#author-filter option[value="Tob"]`));
       val = $(this).attr('data-category');
       optionTag = `<option value="${val}">${val}</option>`;
       if ($(`#category-filter option[value="${val}"]`).length === 0) {
@@ -25,7 +26,7 @@ articleView.populateFilters = function(){
   });
 };
 
-articleView.handleAuthorFilter = function() {
+articleView.handleAuthorFilter = () => {
   $('#author-filter').on('change', function() {
     if ($(this).val()) {
       $('article').hide();
@@ -38,7 +39,7 @@ articleView.handleAuthorFilter = function() {
   });
 };
 
-articleView.handleCategoryFilter = function() {
+articleView.handleCategoryFilter = () => {
   $('#category-filter').on('change', function() {
     if ($(this).val()) {
       $('article').hide();
@@ -60,7 +61,7 @@ articleView.handleMainNav = () => {
   $('.main-nav .tab:first').click();
 };
 
-articleView.setTeasers = () => {
+articleView.setTeasers = function() {
   $('.article-body *:nth-of-type(n+2)').hide();
   $('article').on('click', 'a.read-on', function(e) {
     e.preventDefault();
@@ -77,10 +78,52 @@ articleView.setTeasers = () => {
   });
 };
 
-$(document).ready(() => {
+articleView.initNewArticlePage = function() {
+  $('#articles').empty();
+
+  $('.tab-content').show();
+
+  $('#export-field').hide();
+  $('#article-json').on('focus', function() {
+    console.log('this:', this);
+    console.log('$(this)', $(this));
+    this.select();
+  });
+
+  // on change of our new form create our JSON object
+  $('#new-form').on('change', 'input, textarea', articleView.create);
+}
+
+articleView.create = () => {
+  let article;
+
+  $('#articles').empty();
+
+  article = new Article({
+    title: $('#article-title').val(),
+    author: $('#article-author').val(),
+    authorUrl: $('#article-author-url').val(),
+    category: $('#article-category').val(),
+    body: $('#article-body').val(),
+    publishedOn: $('#article-published:checked').length ? new Date() : null
+  });
+
+  $('#articles').append(article.toHtml());
+
+  $('pre code').each(function(i, block) {
+    console.log('index:', i);
+    hljs.highlightBlock(block);
+  })
+
+  $('#export-field').show();
+  $('#article-json').val(JSON.stringify(article) + ',');
+}
+
+articleView.initIndexPage = () => {
+  articles.forEach(article => $('#articles').append(article.toHtml()));
   articleView.populateFilters();
   articleView.handleCategoryFilter();
   articleView.handleAuthorFilter();
   articleView.handleMainNav();
   articleView.setTeasers();
-})
+}
